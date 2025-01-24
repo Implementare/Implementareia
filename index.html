@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskMaster - Lista Organizada</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --secondary: #50e3c2;
+            --background: #f5f7fa;
+            --text: #2d3436;
+            --danger: #ff7675;
+            --border: #e0e0e0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background: var(--background);
+            color: var(--text);
+            transition: background 0.3s ease;
+        }
+
+        .dark-mode {
+            --background: #1a1a1a;
+            --text: #ffffff;
+            --border: #333333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 1.5rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        input[type="text"], input[type="date"], select {
+            flex: 1;
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        button {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s ease;
+        }
+
+        .add-btn {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        .board-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .task-column {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            min-height: 600px;
+        }
+
+        .column-header {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-header {
+            background: var(--background);
+            padding: 0.5rem;
+            margin: 1rem 0;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            background: white;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: move;
+        }
+
+        .task-item.completed {
+            background: #f8f9fa;
+            opacity: 0.7;
+        }
+
+        .task-checkbox {
+            margin-right: 1rem;
+            width: 1.2rem;
+            height: 1.2rem;
+            cursor: pointer;
+        }
+
+        .task-text {
+            flex: 1;
+            margin-right: 1rem;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .stats {
+            margin-top: 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: var(--background);
+            border-radius: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .board-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-tasks"></i>TaskMaster Pro</h1>
+            <button class="theme-toggle" onclick="toggleDarkMode()">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+
+        <div class="input-group">
+            <select id="taskSection">
+                <option value="General">General</option>
+                <option value="Trabajo">Trabajo</option>
+                <option value="Personal">Personal</option>
+            </select>
+            <input type="text" id="taskInput" placeholder="Nueva tarea...">
+            <input type="date" id="dueDate">
+            <button class="add-btn" onclick="addTask()"><i class="fas fa-plus"></i></button>
+        </div>
+
+        <div class="board-container">
+            <div class="task-column">
+                <div class="column-header">🟢 Tareas Activas</div>
+                <div id="activeTasks"></div>
+            </div>
+            
+            <div class="task-column">
+                <div class="column-header">✅ Tareas Completadas</div>
+                <div id="completedTasks"></div>
+            </div>
+        </div>
+
+        <div class="stats" id="stats">
+            <!-- Estadísticas se generarán automáticamente -->
+        </div>
+    </div>
+
+    <script>
+        let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+        let sections = JSON.parse(localStorage.getItem('sections')) || ['General', 'Trabajo', 'Personal'];
+
+        function init() {
+            renderTasks();
+            updateStats();
+            document.getElementById('taskInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addTask();
+            });
+        }
+
+        function addTask() {
+            const taskInput = document.getElementById('taskInput');
+            const dueDate = document.getElementById('dueDate');
+            const taskSection = document.getElementById('taskSection');
+
+            if (taskInput.value.trim()) {
+                const newTask = {
+                    id: Date.now(),
+                    section: taskSection.value,
+                    text: taskInput.value.trim(),
+                    completed: false,
+                    dueDate: dueDate.value,
+                    createdAt: new Date()
+                };
+
+                tasks.push(newTask);
+                saveData();
+                renderTasks();
+                taskInput.value = '';
+                dueDate.value = '';
+            }
+        }
+
+        function renderTasks() {
+            const activeTasks = document.getElementById('activeTasks');
+            const completedTasks = document.getElementById('completedTasks');
+            
+            activeTasks.innerHTML = '';
+            completedTasks.innerHTML = '';
+
+            const groupedTasks = tasks.reduce((acc, task) => {
+                const status = task.completed ? 'completed' : 'active';
+                if (!acc[task.section]) acc[task.section] = { active: [], completed: [] };
+                acc[task.section][status].push(task);
+                return acc;
+            }, {});
+
+            Object.entries(groupedTasks).forEach(([section, tasksByStatus]) => {
+                // Tareas Activas
+                const activeSection = createSectionElement(section, tasksByStatus.active, false);
+                activeTasks.appendChild(activeSection);
+
+                // Tareas Completadas
+                const completedSection = createSectionElement(section, tasksByStatus.completed, true);
+                completedTasks.appendChild(completedSection);
+            });
+        }
+
+        function createSectionElement(sectionName, tasks, isCompleted) {
+            const container = document.createElement('div');
+            const sectionHeader = document.createElement('div');
+            sectionHeader.className = 'section-header';
+            sectionHeader.textContent = `${sectionName} (${tasks.length})`;
+            container.appendChild(sectionHeader);
+
+            tasks.forEach(task => {
+                const taskElement = document.createElement('div');
+                taskElement.className = `task-item ${isCompleted ? 'completed' : ''}`;
+                taskElement.innerHTML = `
+                    <input type="checkbox" class="task-checkbox" 
+                           ${isCompleted ? 'checked' : ''} 
+                           onchange="toggleTask(${task.id})">
+                    <span class="task-text">${task.text}</span>
+                    ${task.dueDate ? `<span class="due-date">📅 ${task.dueDate}</span>` : ''}
+                    <div class="task-actions">
+                        <button class="edit-btn" onclick="editTask(${task.id})"><i class="fas fa-edit"></i></button>
+                        <button class="delete-btn" onclick="deleteTask(${task.id})"><i class="fas fa-trash"></i></button>
+                    </div>
+                `;
+                container.appendChild(taskElement);
+            });
+
+            return container;
+        }
+
+        function updateStats() {
+            const stats = document.getElementById('stats');
+            stats.innerHTML = '';
+
+            const sectionCounts = tasks.reduce((acc, task) => {
+                acc[task.section] = acc[task.section] || { active: 0, completed: 0 };
+                task.completed ? acc[task.section].completed++ : acc[task.section].active++;
+                return acc;
+            }, {});
+
+            Object.entries(sectionCounts).forEach(([section, counts]) => {
+                const statElement = document.createElement('div');
+                statElement.className = 'stat-item';
+                statElement.innerHTML = `
+                    <h3>${section}</h3>
+                    <p>Activas: ${counts.active}</p>
+                    <p>Completadas: ${counts.completed}</p>
+                `;
+                stats.appendChild(statElement);
+            });
+        }
+
+        // Resto de funciones (toggleTask, deleteTask, editTask, saveData, etc.) se mantienen igual
+        function toggleTask(id) {
+            const task = tasks.find(task => task.id === id);
+            task.completed = !task.completed;
+            saveData();
+            renderTasks();
+            updateStats();
+        }
+
+        function deleteTask(id) {
+            tasks = tasks.filter(task => task.id !== id);
+            saveData();
+            renderTasks();
+            updateStats();
+        }
+
+        function editTask(id) {
+            const task = tasks.find(task => task.id === id);
+            const newText = prompt('Editar tarea:', task.text);
+            if (newText !== null) {
+                task.text = newText.trim();
+                saveData();
+                renderTasks();
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+            localStorage.setItem('sections', JSON.stringify(sections));
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const themeIcon = document.querySelector('.theme-toggle i');
+            themeIcon.classList.toggle('fa-moon');
+            themeIcon.classList.toggle('fa-sun');
+            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+        }
+
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+            document.querySelector('.theme-toggle i').classList.replace('fa-moon', 'fa-sun');
+        }
+
+        init();
+    </script>
+</body>
+</html>
