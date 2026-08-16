@@ -1,0 +1,25 @@
+# ============================================
+# Jim Klaus - Marca Personal
+# Variables de entorno necesarias
+# ============================================
+
+# --- Manus Storage Proxy (para servir imágenes del CDN) ---
+# Estas variables son necesarias si usas el proxy de storage de Manus
+# Si migras fuera de Manus, mueve las imágenes a /client/public/images/
+# y actualiza las rutas en el código (ver MIGRATION.md)
+BUILT_IN_FORGE_API_URL=https://forge.manus.ai
+BUILT_IN_FORGE_API_KEY=tu_clave_aqui
+
+# --- Analytics (opcional) ---
+VITE_ANALYTICS_ENDPOINT=https://tu-analytics.com
+VITE_ANALYTICS_WEBSITE_ID=tu_website_id
+
+# --- App Info ---
+VITE_APP_TITLE=Jim Klaus - Marca Personal
+VITE_APP_LOGO=
+VITE_APP_ID=tu_app_id
+
+# --- OAuth (solo si usas autenticación Manus, no requerido para sitio estático) ---
+VITE_OAUTH_PORTAL_URL=https://manus.im
+OAUTH_SERVER_URL=https://api.manus.im
+JWT_SECRET=genera_un_jwt_secret_aleatorio
